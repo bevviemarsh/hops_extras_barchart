@@ -103,7 +103,7 @@
     };
 
     const getCalculatedSVGAndGraphParams = (chartField) => {
-      const { margin, graphMargin, translate, graphId } = graphProperties;
+      const { margin, graphMargin, translate } = graphProperties;
       const { getContainer } = graphActions;
 
       const mainContainer = (chartField) => getContainer(chartField);
@@ -153,7 +153,7 @@
         .attr("height", calculatedSvgHeight)
         .attr("transform", graphPosition);
 
-      return mainChart;
+      return { mainSvg, mainChart };
     };
 
     const getMainChart = (chartField) => getCreatedSVGAndGraph(chartField);
@@ -241,23 +241,65 @@
       const firstDecadeBarChartData = getCalculatedBarChartData(firstDecade);
       const secondDecadeBarChartData = getCalculatedBarChartData(secondDecade);
 
-      return getChosenDataset(
+      return getUpdatedDataset(
         firstDecadeBarChartData,
         secondDecadeBarChartData
       );
     };
 
-    const getCalculatedScalesAndAxes = () => {};
+    const getUpdatedDataset = (
+      firstDecadeBarChartData,
+      secondDecadeBarChartData
+    ) => {
+      const handleFirstDecade = () => update(firstDecadeBarChartData);
+      const handleSecondDecade = () => update(secondDecadeBarChartData);
+
+      document
+        .querySelector(".earlierBtn")
+        .addEventListener("click", handleFirstDecade);
+      document
+        .querySelector(".laterBtn")
+        .addEventListener("click", handleSecondDecade);
+    };
+
+    const getCalculatedScalesAndAxes = () => {
+      const { graphId, translate } = graphProperties;
+      const { basicWidth, basicHeight } = getCalculatedSVGAndGraphParams(
+        graphId
+      );
+      const { mainSvg } = getMainChart(graphId);
+
+      const xScale = d3.scaleBand().range([0, basicWidth]).padding(0.2);
+      const xAxis = mainSvg
+        .append("g")
+        .attr("transform", translate(0, basicHeight));
+
+      const yScale = d3.scaleLinear().range([basicHeight, 0]);
+      const yAxis = mainSvg.append("g");
+
+      return {
+        xScale,
+        xAxis,
+        yScale,
+        yAxis,
+      };
+    };
+
+    const getUpdatedGraphElements = (barCharDataset) => {
+      const { xScale, xAxis, yScale, yAxis } = getCalculatedScalesAndAxes();
+    };
 
     const renderView = (barCharDataset) => {
       const { graphId } = graphProperties;
+      const { mainChart } = getMainChart(graphId);
 
       console.log(barCharDataset);
 
-      const barChart = getMainChart(graphId);
+      const barChart = mainChart;
     };
 
     const update = (barCharDataset) => {
+      getUpdatedGraphElements(barCharDataset);
       renderView(barCharDataset);
     };
 
