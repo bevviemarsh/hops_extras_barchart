@@ -148,3 +148,40 @@ test("get tooltip with missing data", () => {
     dataActions.getTooltipInfo(exampleEmptyArray[0], dataActions.checkIfTrue)
   ).toStrictEqual([]);
 });
+
+test("get max element from array", () => {
+  const exampleArray = [
+    { name: "first random beer", value: 10 },
+    { name: "second random beer", value: 15 },
+    { name: "third random beer", value: 5 },
+  ];
+  const exampleProperty = "value";
+
+  expect(dataActions.getMaximumElement(exampleArray, exampleProperty)).toBe(15);
+});
+
+test("get max element from empty array case or no property case", () => {
+  const exampleArray = [
+    { name: "first random beer", value: 10 },
+    { name: "second random beer", value: 15 },
+    { name: "third random beer", value: 5 },
+  ];
+  const exampleEmptyArray = [];
+  const exampleProperty = "value";
+  const exampleNoExistanceProp = "beer";
+  const exampleNoProp = "";
+
+  expect(
+    dataActions.getMaximumElement(exampleEmptyArray, exampleProperty)
+  ).toBe(0);
+
+  expect(dataActions.getMaximumElement(exampleArray, exampleNoProp)).toBe(0);
+
+  expect(dataActions.getMaximumElement(exampleEmptyArray, exampleNoProp)).toBe(
+    0
+  );
+
+  expect(
+    dataActions.getMaximumElement(exampleArray, exampleNoExistanceProp)
+  ).toBe(0);
+});

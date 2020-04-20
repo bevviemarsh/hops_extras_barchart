@@ -14,3 +14,19 @@ test("pass id and no id", () => {
 
   expect(graphActions.getContainer(testNoId)).toBeNull();
 });
+
+// test("input some values to translate", () => {
+//   const exampleValues = { x: 15, y: 20 };
+
+//   expect(graphActions.translate(exampleValues.x, exampleValues.y)).toEqual(
+//     `translate(${exampleValues.x}, ${exampleValues.y})`
+//   );
+// });
+
+// test("no number values to translate", () => {
+//   const exampleValues = { x: "string", y: 20 };
+
+//   expect(graphActions.translate(exampleValues.x, exampleValues.y)).toEqual(
+//     `translate(0, 0)`
+//   );
+// });

@@ -2,12 +2,12 @@
   const barChart = (function () {
     const unique = require("uniq");
 
-    const DATA = "https://api.punkapi.com/v2/beers";
+    const DATA = "https://api.punkapi.com/v2/beers?page=1";
 
     const graphProperties = {
       colors: {
-        barColor: "black",
-        clickedBarColor: "black",
+        barColor: "#13b937",
+        clickedBarColor: "#019221",
         labelColor: "black",
 
         graphLinesColor: "black",
@@ -15,20 +15,35 @@
         tooltipInfoColor: "black",
       },
 
+      barParams: {
+        barPadding: 0.2,
+        barYPositon: (height, scaleFn, value) => height - scaleFn(value),
+      },
+
       labelParams: {
-        fontFamily: "Muli",
-        fontWeight: "normal",
-        fontSize: "13px",
-        labelColor: "#1af48b",
+        fontSize: (scaleFn) =>
+          scaleFn.bandwidth() >= 40
+            ? scaleFn.bandwidth() / 5
+            : scaleFn.bandwidth() / 3,
+        fontWeight: "bold",
         opacityValue: "0",
-        textAnchorPosition: "start",
+        textAnchorPosition: "middle",
         letterSpacing: "1",
+        labelClass: ".label",
+        labelXPosition: (scaleFn, value) =>
+          scaleFn(value) + scaleFn.bandwidth() / 2,
+        labelYPosition: (scaleFn, value, marginValue) =>
+          scaleFn(value) - marginValue / 2,
+        visible: 1,
+        hidden: 0,
       },
 
       axesParams: {
-        axisColor: "black",
-        axesFontSize: "12px",
-        axesLetterSpacing: "0.5",
+        axesColor: "#798296",
+        axesFontSize: "10px",
+        axesFontWeight: "bold",
+        axesTextAnchor: "end",
+        axesTestRotate: -45,
         tickSizeValue: "10",
       },
 
@@ -42,12 +57,20 @@
       labelClass: ".barChart",
 
       margin: 10,
-      graphMargin: { top: 20, left: 20, right: 100, bottom: 100 },
+      graphMargin: { top: 50, left: 20, right: 120, bottom: 150 },
+
+      durationTime: 400,
+
+      clicked: true,
 
       translate: (firstMarginValue, secondMarginValue) =>
-        `translate(${firstMarginValue}, ${secondMarginValue})`,
+        typeof firstMarginValue !== "number" ||
+        typeof secondMarginValue !== "number"
+          ? `translate(0, 0)`
+          : `translate(${firstMarginValue}, ${secondMarginValue})`,
 
-      durationTime: 200,
+      rotate: (num) =>
+        typeof num !== "number" ? `rotate(0)` : `rotate(${num})`,
     };
 
     const graphActions = {
@@ -55,13 +78,15 @@
     };
 
     const dataProperties = {
-      periodRange: 2010,
+      periodRange: 2011,
       cutMonth: 3,
       hopsProperty: "hops",
       ingredientsProperty: "ingredients",
       amountProperty: "amount",
       valueProperty: "value",
       firstBrewedProperty: "first_brewed",
+      yProperty: "y",
+      noData: "no data",
     };
 
     const dataActions = {
@@ -91,14 +116,26 @@
           ? 0
           : arr.reduce((prevValue, currValue) => prevValue + currValue),
 
-      checkIfTrue: (item) => (!item ? "no data" : item),
+      checkIfTrue: (condition, firstItem, secondItem) =>
+        condition ? firstItem : secondItem,
 
-      getTooltipInfo: (dd, checkFn) =>
+      getTooltipInfo: (dd, checkFn, emptyValue) =>
         !dd || !checkFn
           ? []
-          : `${checkFn(dd.name)}: ${checkFn(dd.value)}g - ${checkFn(
-              dd.attribute
-            )}`,
+          : `${checkFn(dd.name, dd.name, emptyValue)}: ${checkFn(
+              dd.value,
+              dd.value,
+              emptyValue
+            )}g - ${checkFn(dd.attribute, dd.attribute, emptyValue)}`,
+
+      getMaximumElement: (arr, property) =>
+        !arr || !arr.length
+          ? 0
+          : Math.max(
+              ...arr.map((item) =>
+                !property || item[property] === undefined ? 0 : item[property]
+              )
+            ),
     };
 
     const getCalculatedSVGAndGraphParams = (chartField) => {
@@ -106,6 +143,7 @@
       const { getContainer } = graphActions;
 
       const mainContainer = (chartField) => getContainer(chartField);
+
       const basicWidth = mainContainer(chartField).offsetWidth;
       const calculatedSvgWidth = basicWidth - margin;
       const calculatedGraphWidth =
@@ -116,7 +154,7 @@
       const calculatedGraphHeight =
         calculatedSvgHeight - graphMargin.top - graphMargin.bottom;
 
-      const graphPosition = translate(graphMargin.left, graphMargin.top);
+      const graphPosition = translate(graphMargin.right, graphMargin.top);
 
       return {
         mainContainer,
@@ -130,16 +168,18 @@
       };
     };
 
-    const getCreatedSVGAndGraph = (chartField) => {
-      const {
-        mainContainer,
-        basicWidth,
-        calculatedSvgWidth,
-        basicHeight,
-        calculatedSvgHeight,
-        graphPosition,
-      } = getCalculatedSVGAndGraphParams(chartField);
+    const {
+      mainContainer,
+      basicWidth,
+      calculatedSvgWidth,
+      calculatedGraphWidth,
+      basicHeight,
+      calculatedSvgHeight,
+      calculatedGraphHeight,
+      graphPosition,
+    } = getCalculatedSVGAndGraphParams(graphProperties.graphId);
 
+    const getCreatedSVGAndGraph = (chartField) => {
       const svgSelection = d3.select(mainContainer(chartField)).append("svg");
 
       const mainSvg = svgSelection
@@ -150,12 +190,18 @@
       const mainChart = mainSvg
         .attr("width", calculatedSvgWidth)
         .attr("height", calculatedSvgHeight)
-        .attr("transform", graphPosition);
+        .attr("transform", graphPosition)
+        .append("g");
 
-      return { mainSvg, mainChart };
+      const barGroup = mainChart.append("g");
+      const labelGroup = mainChart.append("g");
+
+      return { mainSvg, barGroup, labelGroup };
     };
 
-    const getMainChart = (chartField) => getCreatedSVGAndGraph(chartField);
+    const { mainSvg, barGroup, labelGroup } = getCreatedSVGAndGraph(
+      graphProperties.graphId
+    );
 
     const getProperPeriod = (data) => {
       if (!data.length) {
@@ -183,6 +229,7 @@
 
     const getPreparedData = (dataBeforeperiodRange, dataAfterperiodRange) => {
       const {
+        firstBrewedProperty,
         ingredientsProperty,
         hopsProperty,
         amountProperty,
@@ -190,7 +237,7 @@
       } = dataProperties;
 
       const { getHopsValues, getHopsSum } = dataActions;
-
+      console.log(dataBeforeperiodRange);
       const getModifiedData = (data) =>
         data.map((d) => ({
           id: d.id,
@@ -204,6 +251,7 @@
               valueProperty
             )
           ),
+          year: d[firstBrewedProperty],
           abv: d.abv,
           ibu: d.ibu,
           hops: d[ingredientsProperty][hopsProperty].map((dd) => ({
@@ -220,61 +268,70 @@
     };
 
     const getBarChartData = (firstDecade, secondDecade) => {
-      console.log(firstDecade, secondDecade);
-
+      const { noData } = dataProperties;
       const { checkIfTrue, getTooltipInfo } = dataActions;
 
       const getCalculatedBarChartData = (data) =>
         data.map((d) => ({
           id: d.id,
-          x: d.name,
+          x: checkIfTrue(
+            d.name.length > 25,
+            `${d.name.substr(0, 25)}...`,
+            d.name
+          ),
           y: d.amount,
-          text: d.amount,
+          text: d.amount.toFixed(1),
           tooltipInfo: {
-            abv: checkIfTrue(d.abv),
-            ibu: checkIfTrue(d.ibu),
-            hopsInfo: d.hops.map((dd) => getTooltipInfo(dd, checkIfTrue)),
+            year: checkIfTrue(d.year, d.year, noData),
+            abv: checkIfTrue(d.abv, d.abv, noData),
+            ibu: checkIfTrue(d.ibu, d.ibu, noData),
+            hopsInfo: d.hops.map((dd) =>
+              getTooltipInfo(dd, checkIfTrue, noData)
+            ),
           },
         }));
 
       const firstDecadeBarChartData = getCalculatedBarChartData(firstDecade);
       const secondDecadeBarChartData = getCalculatedBarChartData(secondDecade);
 
-      return getUpdatedDataset(
+      return handleUpdatedData(
         firstDecadeBarChartData,
         secondDecadeBarChartData
       );
     };
 
-    const getUpdatedDataset = (
+    const handleUpdatedData = (
       firstDecadeBarChartData,
       secondDecadeBarChartData
     ) => {
-      const handleFirstDecade = () => update(firstDecadeBarChartData);
-      const handleSecondDecade = () => update(secondDecadeBarChartData);
+      document.querySelector(".earlierBtn").addEventListener("click", () => {
+        update(firstDecadeBarChartData);
+        // graphProperties.clicked = !graphProperties.clicked;
+      });
+      document.querySelector(".laterBtn").addEventListener("click", () => {
+        update(secondDecadeBarChartData);
+        // graphProperties.clicked = graphProperties.clicked;
+      });
 
-      document
-        .querySelector(".earlierBtn")
-        .addEventListener("click", handleFirstDecade);
-      document
-        .querySelector(".laterBtn")
-        .addEventListener("click", handleSecondDecade);
+      return update(firstDecadeBarChartData);
     };
 
     const getCalculatedScalesAndAxes = () => {
-      const { graphId, translate } = graphProperties;
-      const { basicWidth, basicHeight } = getCalculatedSVGAndGraphParams(
-        graphId
-      );
-      const { mainSvg } = getMainChart(graphId);
+      const { barParams, axesParams, translate } = graphProperties;
+      const { barPadding } = barParams;
+      const { axesColor } = axesParams;
 
-      const xScale = d3.scaleBand().range([0, basicWidth]).padding(0.2);
+      const xScale = d3
+        .scaleBand()
+        .range([0, calculatedGraphWidth])
+        .padding(barPadding);
       const xAxis = mainSvg
         .append("g")
-        .attr("transform", translate(0, basicHeight));
+        .attr("transform", translate(0, calculatedGraphHeight))
+        .style("color", axesColor);
 
-      const yScale = d3.scaleLinear().range([basicHeight, 0]);
-      const yAxis = mainSvg.append("g");
+      const yScale = d3.scaleLinear().range([calculatedGraphHeight, 0]);
+      const yAxis = mainSvg.append("g").style("color", axesColor);
 
       return {
         xScale,
@@ -284,22 +341,126 @@
       };
     };
 
-    const getUpdatedGraphElements = (barCharDataset) => {
-      const { xScale, xAxis, yScale, yAxis } = getCalculatedScalesAndAxes();
-    };
+    const { xScale, xAxis, yScale, yAxis } = getCalculatedScalesAndAxes();
 
     const renderView = (barCharDataset) => {
-      const { graphId } = graphProperties;
-      const { mainChart } = getMainChart(graphId);
+      const {
+        colors,
+        barParams,
+        labelParams,
+        axesParams,
+        durationTime,
+        cursorPointer,
+        rotate,
+        margin,
+      } = graphProperties;
+      const { yProperty } = dataProperties;
+      const { getMaximumElement } = dataActions;
+      const { barColor } = colors;
+      const { barYPositon } = barParams;
+      const {
+        fontSize,
+        fontWeight,
+        labelClass,
+        textAnchorPosition,
+        labelXPosition,
+        labelYPosition,
+        hidden,
+      } = labelParams;
+      const {
+        axesFontSize,
+        axesFontWeight,
+        axesTextAnchor,
+        axesTestRotate,
+      } = axesParams;
 
       console.log(barCharDataset);
 
-      const barChart = mainChart;
+      xScale.domain(barCharDataset.map((d) => d.x));
+      xAxis.transition().duration(durationTime).call(d3.axisBottom(xScale));
+      xAxis
+        .selectAll("text")
+        .attr("transform", rotate(axesTestRotate))
+        .attr("text-anchor", axesTextAnchor)
+        .style("font-size", axesFontSize)
+        .style("font-weight", axesFontWeight);
+
+      yScale.domain([0, getMaximumElement(barCharDataset, yProperty)]);
+      yAxis.transition().duration(durationTime).call(d3.axisLeft(yScale));
+      yAxis.selectAll("text").style("font-size", axesFontSize);
+
+      const bars = barGroup.selectAll("rect").data(barCharDataset, (d) => d.id);
+
+      const labels = labelGroup
+        .selectAll("text")
+        .data(barCharDataset, (d) => d.id);
+
+      bars
+        .enter()
+        .append("rect")
+        .attr("x", (d) => xScale(d.x))
+        .attr("y", calculatedGraphHeight)
+        .attr("height", 0)
+        .attr("width", xScale.bandwidth())
+        .attr("fill", barColor)
+        .attr("cursor", cursorPointer)
+        .merge(bars)
+        .transition()
+        .duration(durationTime)
+        .attr("y", (d) => yScale(d.y))
+        .attr("height", (d) => barYPositon(calculatedGraphHeight, yScale, d.y));
+
+      labels
+        .enter()
+        .append("text")
+        .attr("class", labelClass.substr(1))
+        .text((d) => d.text)
+        .attr("x", (d) => labelXPosition(xScale, d.x))
+        .attr("y", (d) => labelYPosition(yScale, d.y, margin))
+        .attr("text-anchor", textAnchorPosition)
+        .attr("font-size", fontSize(xScale))
+        .attr("font-weight", fontWeight)
+        .attr("opacity", hidden);
+
+      bars.exit().remove();
+
+      labels.exit().remove();
+    };
+
+    const handleEvents = () => {
+      const { colors, labelParams, durationTime } = graphProperties;
+      const { checkIfTrue } = dataActions;
+      const { barColor, clickedBarColor } = colors;
+      const { labelClass, visible, hidden } = labelParams;
+
+      const handleLabels = (d, i, n) => {
+        d3.selectAll(n)
+          .transition()
+          .duration(durationTime)
+          .attr(
+            "fill",
+            checkIfTrue(graphProperties.clicked, clickedBarColor, barColor)
+          );
+
+        d3.selectAll(labelClass)
+          .transition()
+          .duration(durationTime)
+          .style(
+            "opacity",
+            checkIfTrue(graphProperties.clicked, visible, hidden)
+          );
+      };
+
+      barGroup.selectAll("rect").on("click", (d, i, n) => {
+        handleLabels(d, i, n);
+        graphProperties.clicked = !graphProperties.clicked;
+        console.log(graphProperties.clicked);
+      });
     };
 
     const update = (barCharDataset) => {
-      getUpdatedGraphElements(barCharDataset);
       renderView(barCharDataset);
+      handleEvents();
     };
 
     const getData = async () => {
