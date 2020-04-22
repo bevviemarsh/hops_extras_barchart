@@ -15,20 +15,43 @@
       <div id="mainElements">
         <div id="graphInfo">
           <div id="title" class="container">
-            <h1 class="titleMainTxt">Amount of hops</h1>
+            <h1 class="titleMainTxt">hops and extras</h1>
             <h2 class="titleAdditionalTxt">in Brew Dog beers</h2>
+            <h3 class="titleDigressionTxt">(grams for 20 l)</h3>
           </div>
 
           <div id="buttons" class="container">
-            <p class="btnTxt">Choose interested period</p>
+            <label for="beerSet" id="beerSet">Choose set of beers</label>
+            <select name="beerSet" id="beerSet">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+            </select>
             <button id="btn" class="earlierBtn">
-              Before 2012
+              Before 2011
             </button>
-            <button id="btn" class="laterBtn">Since 2012</button>
+            <button id="btn" class="laterBtn">Since 2011</button>
           </div>
         </div>
 
         <div id="graph" class="container">
+          <div id="graphOptions">
+            <button class="labelsBtn">Show / hide labels</button>
+            <h2 class="barInfoTxt">select bar to display more info</h2>
+            <div class="barInfo"></div>
+            <button class="clearBtn">Clear data</button>
+          </div>
+
           <div id="barChart"></div>
         </div>
       </div>
@@ -42,6 +65,7 @@
 
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="https://d3js.org/d3-scale.v3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.9.1/d3-tip.js"></script>
     <script src="assets/scripts/bundle.js"></script>
   </body>
 </html>

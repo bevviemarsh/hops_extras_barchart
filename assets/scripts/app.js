@@ -7,10 +7,11 @@
     const graphProperties = {
       colors: {
         barColor: "#13b937",
-        clickedBarColor: "#019221",
-        labelColor: "black",
 
-        graphLinesColor: "black",
+        labelColor: "#222523",
+
+        gridLinesColor: "#c0c4ce",
+
         tooltipBcgColor: "black",
         tooltipInfoColor: "black",
       },
@@ -21,10 +22,18 @@
       },
 
       labelParams: {
-        fontSize: (scaleFn) =>
-          scaleFn.bandwidth() >= 40
-            ? scaleFn.bandwidth() / 5
-            : scaleFn.bandwidth() / 3,
+        fontSize: (scaleFn) => {
+          if (scaleFn.bandwidth() >= 110) {
+            return scaleFn.bandwidth() / 15;
+          } else if (scaleFn.bandwidth() >= 80) {
+            return scaleFn.bandwidth() / 6;
+          } else if (scaleFn.bandwidth() <= 20) {
+            return 0;
+          } else {
+            return scaleFn.bandwidth() / 3;
+          }
+        },
+
         fontWeight: "bold",
         opacityValue: "0",
         textAnchorPosition: "middle",
@@ -36,6 +45,11 @@
           scaleFn(value) - marginValue / 2,
         visible: 1,
         hidden: 0,
+      },
+
+      tooltipParams: {
+        tooltipYPosition: (scaleFn, marginValue) =>
+          scaleFn.bandwidth() >= 80 ? marginValue * 3 : marginValue * 2,
       },
 
       axesParams: {
@@ -57,11 +71,13 @@
       labelClass: ".barChart",
 
       margin: 10,
-      graphMargin: { top: 50, left: 20, right: 120, bottom: 150 },
+      graphMargin: { top: 90, left: 20, right: 90, bottom: 150 },
 
       durationTime: 400,
 
-      clicked: true,
+      clickedLabel: true,
+      clickedBar: true,
+      clickedClass: "active",
 
       translate: (firstMarginValue, secondMarginValue) =>
         typeof firstMarginValue !== "number" ||
@@ -78,7 +94,7 @@
     };
 
     const dataProperties = {
-      periodRange: 2011,
+      periodRange: 2010,
       cutMonth: 3,
       hopsProperty: "hops",
       ingredientsProperty: "ingredients",
@@ -93,15 +109,19 @@
       getEarlierPeriod: (data, property, sliceValue, range) =>
         !data || !property || !sliceValue || !range
           ? []
-          : data.filter(
-              (item) => Number(item[property].slice(sliceValue)) <= range
+          : data.filter((item) =>
+              item[property].length > 4
+                ? Number(item[property].slice(sliceValue)) <= range
+                : Number(item[property]) <= range
             ),
 
       getLaterPeriod: (data, property, sliceValue, range) =>
         !data || !property || !sliceValue || !range
           ? []
-          : data.filter(
-              (item) => Number(item[property].slice(sliceValue)) > range
+          : data.filter((item) =>
+              item[property].length > 4
+                ? Number(item[property].slice(sliceValue)) > range
+                : Number(item[property]) > range
             ),
 
       getHopsValues: (item, firstProp, secondProp, thirdProp, fourthProp) =>
@@ -119,14 +139,14 @@
       checkIfTrue: (condition, firstItem, secondItem) =>
         condition ? firstItem : secondItem,
 
-      getTooltipInfo: (dd, checkFn, emptyValue) =>
+      getHopsInfo: (dd, checkFn, emptyValue) =>
         !dd || !checkFn
           ? []
-          : `${checkFn(dd.name, dd.name, emptyValue)}: ${checkFn(
-              dd.value,
-              dd.value,
-              emptyValue
-            )}g - ${checkFn(dd.attribute, dd.attribute, emptyValue)}`,
+          : {
+              name: `${checkFn(dd.name, dd.name, emptyValue)}`,
+              value: `${checkFn(dd.value, dd.value, emptyValue)}g`,
+              attribute: `${checkFn(dd.attribute, dd.attribute, emptyValue)}`,
+            },
 
       getMaximumElement: (arr, property) =>
         !arr || !arr.length
@@ -193,15 +213,28 @@
         .attr("transform", graphPosition)
         .append("g");
 
+      const gridLinesGroup = mainChart.append("g");
+      const xAxisGroup = mainChart.append("g");
+      const yAxisGroup = mainChart.append("g");
       const barGroup = mainChart.append("g");
       const labelGroup = mainChart.append("g");
 
-      return { mainSvg, barGroup, labelGroup };
+      return {
+        xAxisGroup,
+        yAxisGroup,
+        gridLinesGroup,
+        barGroup,
+        labelGroup,
+      };
     };
 
-    const { mainSvg, barGroup, labelGroup } = getCreatedSVGAndGraph(
-      graphProperties.graphId
-    );
+    const {
+      xAxisGroup,
+      yAxisGroup,
+      gridLinesGroup,
+      barGroup,
+      labelGroup,
+    } = getCreatedSVGAndGraph(graphProperties.graphId);
 
     const getProperPeriod = (data) => {
       if (!data.length) {
@@ -237,7 +270,7 @@
       } = dataProperties;
 
       const { getHopsValues, getHopsSum } = dataActions;
-      console.log(dataBeforeperiodRange);
+
       const getModifiedData = (data) =>
         data.map((d) => ({
           id: d.id,
@@ -269,7 +302,7 @@
 
     const getBarChartData = (firstDecade, secondDecade) => {
       const { noData } = dataProperties;
-      const { checkIfTrue, getTooltipInfo } = dataActions;
+      const { checkIfTrue, getHopsInfo } = dataActions;
 
       const getCalculatedBarChartData = (data) =>
         data.map((d) => ({
@@ -285,9 +318,7 @@
             year: checkIfTrue(d.year, d.year, noData),
             abv: checkIfTrue(d.abv, d.abv, noData),
             ibu: checkIfTrue(d.ibu, d.ibu, noData),
-            hopsInfo: d.hops.map((dd) =>
-              getTooltipInfo(dd, checkIfTrue, noData)
-            ),
+            hopsInfo: d.hops.map((dd) => getHopsInfo(dd, checkIfTrue, noData)),
           },
         }));
 
@@ -304,13 +335,25 @@
       firstDecadeBarChartData,
       secondDecadeBarChartData
     ) => {
-      document.querySelector(".earlierBtn").addEventListener("click", () => {
-        update(firstDecadeBarChartData);
-        // graphProperties.clicked = !graphProperties.clicked;
+      const { clickedClass } = graphProperties;
+
+      const handleUpdatedElements = (e, dataset, classType) => {
+        update(dataset);
+        document
+          .querySelectorAll("button#btn")
+          .forEach((btn) => btn.classList.remove(classType));
+        e.target.classList.add(classType);
+        document.querySelector("button.labelsBtn").classList.remove(classType);
+        graphProperties.clickedLabel = true;
+        document.querySelector(".barInfo").textContent = "";
+        document.querySelector(".clearBtn").classList.remove(clickedClass);
+      };
+
+      document.querySelector(".earlierBtn").addEventListener("click", (e) => {
+        handleUpdatedElements(e, firstDecadeBarChartData, clickedClass);
       });
-      document.querySelector(".laterBtn").addEventListener("click", () => {
-        update(secondDecadeBarChartData);
-        // graphProperties.clicked = graphProperties.clicked;
+      document.querySelector(".laterBtn").addEventListener("click", (e) => {
+        handleUpdatedElements(e, secondDecadeBarChartData, clickedClass);
       });
 
       return update(firstDecadeBarChartData);
@@ -325,23 +368,32 @@
         .scaleBand()
         .range([0, calculatedGraphWidth])
         .padding(barPadding);
-      const xAxis = mainSvg
+      const xAxis = xAxisGroup
         .append("g")
         .attr("transform", translate(0, calculatedGraphHeight))
         .style("color", axesColor);
 
       const yScale = d3.scaleLinear().range([calculatedGraphHeight, 0]);
-      const yAxis = mainSvg.append("g").style("color", axesColor);
+      const yAxis = yAxisGroup.append("g").style("color", axesColor);
+
+      const getGridlines = () => d3.axisLeft(yScale).ticks(5);
 
       return {
         xScale,
         xAxis,
         yScale,
         yAxis,
+        getGridlines,
       };
     };
 
-    const { xScale, xAxis, yScale, yAxis } = getCalculatedScalesAndAxes();
+    const {
+      xScale,
+      xAxis,
+      yScale,
+      yAxis,
+      getGridlines,
+    } = getCalculatedScalesAndAxes();
 
     const renderView = (barCharDataset) => {
       const {
@@ -356,7 +408,7 @@
       } = graphProperties;
       const { yProperty } = dataProperties;
       const { getMaximumElement } = dataActions;
-      const { barColor } = colors;
+      const { barColor, labelColor, gridLinesColor } = colors;
       const { barYPositon } = barParams;
       const {
         fontSize,
@@ -375,6 +427,7 @@
       } = axesParams;
 
       console.log(barCharDataset);
+      console.log(xScale.bandwidth());
 
       xScale.domain(barCharDataset.map((d) => d.x));
       xAxis.transition().duration(durationTime).call(d3.axisBottom(xScale));
@@ -388,6 +441,11 @@
       yScale.domain([0, getMaximumElement(barCharDataset, yProperty)]);
       yAxis.transition().duration(durationTime).call(d3.axisLeft(yScale));
       yAxis.selectAll("text").style("font-size", axesFontSize);
+
+      gridLinesGroup
+        .attr("color", gridLinesColor)
+        .style("stroke-dasharray", "3,3")
+        .call(getGridlines().tickSize(-calculatedGraphWidth).tickFormat(""));
 
       const bars = barGroup.selectAll("rect").data(barCharDataset, (d) => d.id);
 
@@ -420,6 +478,7 @@
         .attr("text-anchor", textAnchorPosition)
         .attr("font-size", fontSize(xScale))
         .attr("font-weight", fontWeight)
+        .attr("fill", labelColor)
         .attr("opacity", hidden);
 
       bars.exit().remove();
@@ -428,33 +487,81 @@
     };
 
     const handleEvents = () => {
-      const { colors, labelParams, durationTime } = graphProperties;
+      const {
+        labelParams,
+        tooltipParams,
+        durationTime,
+        margin,
+        clickedClass,
+      } = graphProperties;
       const { checkIfTrue } = dataActions;
-      const { barColor, clickedBarColor } = colors;
       const { labelClass, visible, hidden } = labelParams;
+      const { tooltipYPosition } = tooltipParams;
 
-      const handleLabels = (d, i, n) => {
-        d3.selectAll(n)
-          .transition()
-          .duration(durationTime)
-          .attr(
-            "fill",
-            checkIfTrue(graphProperties.clicked, clickedBarColor, barColor)
-          );
+      const clearBtn = document.querySelector(".clearBtn");
 
+      const handleLabels = () => {
         d3.selectAll(labelClass)
           .transition()
           .duration(durationTime)
           .style(
             "opacity",
-            checkIfTrue(graphProperties.clicked, visible, hidden)
+            checkIfTrue(graphProperties.clickedLabel, visible, hidden)
           );
       };
 
-      barGroup.selectAll("rect").on("click", (d, i, n) => {
-        handleLabels(d, i, n);
-        graphProperties.clicked = !graphProperties.clicked;
-        console.log(graphProperties.clicked);
+      const handleBarsData = (d) => {
+        d3.select(".barInfo").html(() =>
+          d.tooltipInfo.hopsInfo
+            .map(
+              (data) =>
+                `<div class="hopsDisplayedInfo"><span class="hopsName">${data.name}</span>: <span class="hopsValue">${data.value}</span> - ${data.attribute}</div>`
+            )
+            .join("")
+        );
+      };
+
+      const tip = d3
+        .tip()
+        .attr("class", "tip")
+        .offset([-tooltipYPosition(xScale, margin), 0])
+        .html((d) => {
+          let content = `<div>${d.tooltipInfo.year}</div>`;
+          content += `<div>${d.tooltipInfo.abv} %</div>`;
+          content += `<div>${d.tooltipInfo.ibu} IBU</div>`;
+          return content;
+        });
+
+      d3.select(".labelsBtn").on("click", (d, i, n) => {
+        handleLabels();
+        n[i].classList.toggle(clickedClass);
+        graphProperties.clickedLabel = !graphProperties.clickedLabel;
+      });
+
+      barGroup
+        .selectAll("rect")
+        .each((d, i, n) => {
+          n[i].addEventListener("click", (e) => {
+            n.forEach((bar) => bar.classList.remove("activeBar"));
+            e.target.classList.add("activeBar");
+            handleBarsData(d);
+            clearBtn.classList.remove(clickedClass);
+          });
+        })
+        .call(tip)
+        .on("mouseover", (d, i, n) => {
+          tip.show(d, n[i]);
+        })
+        .on("mouseout", () => {
+          tip.hide();
+        });
+
+      clearBtn.addEventListener("click", (e) => {
+        e.target.classList.add(clickedClass);
+        d3.select(".barInfo").html(() => ``);
+        barGroup.selectAll("rect").each((d, i, n) => {
+          n.forEach((btn) => btn.classList.remove("activeBar"));
+        });
       });
     };
 

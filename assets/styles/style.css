@@ -16,7 +16,8 @@ body {
 
 #chart,
 #mainElements,
-#graphInfo {
+#graphInfo,
+#graphOptions {
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -34,14 +35,17 @@ body {
 #chart,
 #graphInfo,
 #title,
-#buttons {
+#buttons,
+#graphOptions {
   flex-direction: column;
 }
 
 #infoElements,
 #graph,
 #title,
-#buttons {
+#buttons,
+.labelsBtn,
+.clearBtn {
   background-color: hsla(122, 4%, 100%, 0.75);
   border-radius: 1%;
   box-shadow: -5px 5px 5px 1px hsla(220, 12%, 67%, 1);
@@ -74,11 +78,6 @@ body {
   width: 75%;
 }
 
-#barChart {
-  height: 100%;
-  width: 100%;
-}
-
 #title {
   height: 25%;
   width: 100%;
@@ -89,19 +88,52 @@ body {
   width: 100%;
 }
 
+#beerSet {
+  margin: 15px;
+}
+
+#graphOptions {
+  width: 30%;
+  height: 100%;
+}
+
+#barChart {
+  width: 70%;
+  height: 100%;
+}
+
+.barInfoTxt {
+  font-size: 15px;
+  font-weight: normal;
+  margin: 15px;
+}
+
+.titleMainTxt,
+.titleAdditionalTxt,
+.titleDigressionTxt {
+  margin: 5px;
+  text-align: center;
+}
+
 .titleMainTxt {
   font-size: 25px;
   font-weight: bold;
-  margin: 5px;
 }
 
 .titleAdditionalTxt {
   font-size: 20px;
   font-weight: normal;
-  margin: 5px;
 }
 
-.btnTxt {
+.titleDigressionTxt {
+  font-size: 12px;
+  font-weight: lighter;
+  letter-spacing: 1px;
+}
+
+.btnTxt,
+.labelsBtn,
+.clearBtn {
   font-size: 18px;
   font-weight: normal;
   text-align: center;
@@ -109,8 +141,10 @@ body {
   margin: 15px;
 }
 
-#btn {
-  height: 15%;
+#btn,
+.labelsBtn,
+.clearBtn {
+  height: 12%;
   width: 50%;
   font-family: "Lato", sans-serif;
   font-size: 15px;
@@ -120,19 +154,75 @@ body {
   margin: 25px;
   border: none;
   border-radius: 1%;
-  box-shadow: 0px 0px 5px 2px hsla(220, 12%, 67%, 1);
+  box-shadow: -2px 2px 3px 2px hsla(220, 12%, 67%, 1);
   background-color: transparent;
   cursor: pointer;
   transition: 0.1s linear;
 }
 
-#btn:hover {
-  /* box-shadow: 0px 0px 0px 1px hsla(133, 81%, 40%, 0.91); */
-  color: hsla(133, 81%, 40%, 0.91);
+#btn:focus,
+.labelsBtn:focus,
+.clearBtn:focus {
+  outline: 0;
+}
+
+#btn.earlierBtn.active,
+#btn.laterBtn.active,
+.labelsBtn.active,
+.clearBtn.active {
+  color: hsla(133, 99%, 29%, 1);
+  animation: buttonsAnimation 0.2s;
+}
+
+.activeBar {
+  fill: hsla(133, 100%, 11%, 0.94);
 }
 
 .infoTxt {
   font-size: 10px;
   font-weight: bold;
   letter-spacing: 3px;
+}
+
+.tip {
+  font-size: 12px;
+  text-align: center;
+  padding: 5px;
+  background: hsla(133, 4%, 14%, 0.96);
+  color: hsla(220, 12%, 89%, 1);
+}
+
+.barInfo {
+  height: 90%;
+  width: 100%;
+}
+
+.hopsDisplayedInfo {
+  text-transform: none;
+  font-size: 12px;
+  text-align: center;
+  padding: 10px;
+}
+
+.hopsValue {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.hopsName {
+  font-size: 14px;
+}
+
+@keyframes buttonsAnimation {
+  0% {
+    box-shadow: -2px 2px 3px 2px hsla(220, 12%, 67%, 1);
+  }
+
+  50% {
+    box-shadow: 0px 0px 0px 1px hsla(133, 99%, 29%, 1);
+  }
+
+  100% {
+    box-shadow: -2px 2px 3px 2px hsla(220, 12%, 67%, 1);
+  }
 }
