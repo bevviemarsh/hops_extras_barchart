@@ -89,7 +89,23 @@ body {
 }
 
 #beerSet {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
   margin: 15px;
+  height: 7%;
+  width: 50%;
+  text-align: center;
+  text-align-last: center;
+  font-size: 15px;
+  font-family: "Lato", sans-serif;
+  background-color: transparent;
+  border: none;
+}
+
+#beerSet option {
+  background: hsla(220, 12%, 89%, 1);
+  font-size: 13px;
 }
 
 #graphOptions {
@@ -162,7 +178,8 @@ body {
 
 #btn:focus,
 .labelsBtn:focus,
-.clearBtn:focus {
+.clearBtn:focus,
+#beerSet:focus {
   outline: 0;
 }
 
@@ -200,7 +217,7 @@ body {
 
 .barInfo::-webkit-scrollbar {
   width: 5px;
-  background: #c0c4ce;
+  background: hsla(223, 13%, 78%, 1);
 }
 
 .barInfo::-webkit-scrollbar-thumb {
