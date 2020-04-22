@@ -1,5 +1,5 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-(function () {
+(function IIFE() {
   const barChart = (function () {
     const unique = require("uniq");
 
@@ -12,9 +12,6 @@
         labelColor: "#222523",
 
         gridLinesColor: "#c0c4ce",
-
-        tooltipBcgColor: "black",
-        tooltipInfoColor: "black",
       },
 
       barParams: {
@@ -79,6 +76,7 @@
       clickedLabel: true,
       clickedBar: true,
       clickedClass: "active",
+      clickedBarClass: "activeBar",
 
       translate: (firstMarginValue, secondMarginValue) =>
         typeof firstMarginValue !== "number" ||
@@ -92,6 +90,22 @@
 
     const graphActions = {
       getContainer: (field) => document.getElementById(field),
+    };
+
+    const DOMElements = {
+      buttons: {
+        dataBtns: document.querySelectorAll("button#btn"),
+        firstDecadeBtn: document.querySelector(".earlierBtn"),
+        secondDecadeBtn: document.querySelector(".laterBtn"),
+        labelBtn: document.querySelector("button.labelsBtn"),
+        clearBtn: document.querySelector(".clearBtn"),
+      },
+
+      inputs: {},
+
+      containers: {
+        barInfo: document.querySelector(".barInfo"),
+      },
     };
 
     const dataProperties = {
@@ -337,27 +351,37 @@
       secondDecadeBarChartData
     ) => {
       const { clickedClass } = graphProperties;
+      const { buttons, containers } = DOMElements;
+      const {
+        dataBtns,
+        firstDecadeBtn,
+        secondDecadeBtn,
+        labelBtn,
+        clearBtn,
+      } = buttons;
+      const { barInfo } = containers;
 
       const handleUpdatedElements = (e, dataset, classType) => {
         update(dataset);
-        document
-          .querySelectorAll("button#btn")
-          .forEach((btn) => btn.classList.remove(classType));
+        dataBtns.forEach((btn) => btn.classList.remove(classType));
         e.target.classList.add(classType);
-        document.querySelector("button.labelsBtn").classList.remove(classType);
+        labelBtn.classList.remove(classType);
         graphProperties.clickedLabel = true;
-        document.querySelector(".barInfo").textContent = "";
-        document.querySelector(".clearBtn").classList.remove(clickedClass);
+        barInfo.textContent = "";
+        clearBtn.classList.remove(clickedClass);
       };
 
-      document.querySelector(".earlierBtn").addEventListener("click", (e) => {
+      firstDecadeBtn.addEventListener("click", (e) => {
         handleUpdatedElements(e, firstDecadeBarChartData, clickedClass);
+        handleEvents();
       });
-      document.querySelector(".laterBtn").addEventListener("click", (e) => {
+      secondDecadeBtn.addEventListener("click", (e) => {
         handleUpdatedElements(e, secondDecadeBarChartData, clickedClass);
+        handleEvents();
       });
 
-      return update(firstDecadeBarChartData);
+      update(firstDecadeBarChartData);
+      handleEvents();
     };
 
     const getCalculatedScalesAndAxes = () => {
@@ -494,14 +518,16 @@
         durationTime,
         margin,
         clickedClass,
+        clickedBarClass,
       } = graphProperties;
       const { checkIfTrue } = dataActions;
       const { labelClass, visible, hidden } = labelParams;
       const { tooltipYPosition } = tooltipParams;
+      const { buttons, containers } = DOMElements;
+      const { labelBtn, clearBtn } = buttons;
+      const { barInfo } = containers;
 
-      const clearBtn = document.querySelector(".clearBtn");
-
-      const handleLabels = () => {
+      const getDisplayedLabels = () => {
         d3.selectAll(labelClass)
           .transition()
           .duration(durationTime)
@@ -511,64 +537,65 @@
           );
       };
 
-      const handleBarsData = (d) => {
-        d3.select(".barInfo").html(() =>
-          d.tooltipInfo.hopsInfo
-            .map(
-              (data) =>
-                `<div class="hopsDisplayedInfo"><span class="hopsName">${data.name}</span>: <span class="hopsValue">${data.value}</span> - ${data.attribute}</div>`
-            )
-            .join("")
-        );
+      const getTooltipContent = (d) => {
+        let content = `<div>${d.tooltipInfo.year}</div>`;
+        content += `<div>${d.tooltipInfo.abv} %</div>`;
+        content += `<div>${d.tooltipInfo.ibu} IBU</div>`;
+        return content;
+      };
+
+      const getBarDataContent = (d) => {
+        barInfo.innerHTML = d.tooltipInfo.hopsInfo
+          .map(
+            (data) =>
+              `<div class="hopsDisplayedInfo"><span class="hopsName">${data.name}</span>: <span class="hopsValue">${data.value}</span> - ${data.attribute}</div>`
+          )
+          .join("");
+      };
+
+      const handleLabels = (e) => {
+        getDisplayedLabels();
+        e.target.classList.toggle(clickedClass);
+        graphProperties.clickedLabel = !graphProperties.clickedLabel;
+      };
+
+      const handleBarsData = (e, item, data) => {
+        item.forEach((bar) => bar.classList.remove(clickedBarClass));
+        e.target.classList.add(clickedBarClass);
+        getBarDataContent(data);
+        clearBtn.classList.remove(clickedClass);
+      };
+
+      const getBarsDataCleared = (e) => {
+        e.target.classList.add(clickedClass);
+        barInfo.innerHTML = ``;
+        barGroup.selectAll("rect").each((d, i, n) => {
+          n[i].classList.remove(clickedBarClass);
+        });
       };
 
       const tip = d3
         .tip()
         .attr("class", "tip")
         .offset([-tooltipYPosition(xScale, margin), 0])
-        .html((d) => {
-          let content = `<div>${d.tooltipInfo.year}</div>`;
-          content += `<div>${d.tooltipInfo.abv} %</div>`;
-          content += `<div>${d.tooltipInfo.ibu} IBU</div>`;
-          return content;
-        });
+        .html((d) => getTooltipContent(d));
 
-      d3.select(".labelsBtn").on("click", (d, i, n) => {
-        handleLabels();
-        n[i].classList.toggle(clickedClass);
-        graphProperties.clickedLabel = !graphProperties.clickedLabel;
-      });
+      labelBtn.onclick = (e) => handleLabels(e);
 
       barGroup
         .selectAll("rect")
         .each((d, i, n) => {
-          n[i].addEventListener("click", (e) => {
-            n.forEach((bar) => bar.classList.remove("activeBar"));
-            e.target.classList.add("activeBar");
-            handleBarsData(d);
-            clearBtn.classList.remove(clickedClass);
-          });
+          n[i].addEventListener("click", (e) => handleBarsData(e, n, d));
         })
         .call(tip)
-        .on("mouseover", (d, i, n) => {
-          tip.show(d, n[i]);
-        })
-        .on("mouseout", () => {
-          tip.hide();
-        });
+        .on("mouseover", (d, i, n) => tip.show(d, n[i]))
+        .on("mouseout", () => tip.hide());
 
-      clearBtn.addEventListener("click", (e) => {
-        e.target.classList.add(clickedClass);
-        d3.select(".barInfo").html(() => ``);
-        barGroup.selectAll("rect").each((d, i, n) => {
-          n.forEach((btn) => btn.classList.remove("activeBar"));
-        });
-      });
+      clearBtn.addEventListener("click", (e) => getBarsDataCleared(e));
     };
 
     const update = (barCharDataset) => {
       renderView(barCharDataset);
-      handleEvents();
     };
 
     const getData = async () => {

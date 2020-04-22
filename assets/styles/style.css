@@ -195,6 +195,16 @@ body {
 .barInfo {
   height: 90%;
   width: 100%;
+  overflow-y: scroll;
+}
+
+.barInfo::-webkit-scrollbar {
+  width: 5px;
+  background: #c0c4ce;
+}
+
+.barInfo::-webkit-scrollbar-thumb {
+  background: hsla(220, 12%, 67%, 1);
 }
 
 .hopsDisplayedInfo {
