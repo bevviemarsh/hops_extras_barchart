@@ -2,7 +2,8 @@
   const barChart = (function () {
     const unique = require("uniq");
 
-    const DATA = "https://api.punkapi.com/v2/beers?page=1";
+    const DATA = (optionValue) =>
+      `https://api.punkapi.com/v2/beers?page=${optionValue}`;
 
     const graphProperties = {
       colors: {
@@ -100,7 +101,9 @@
         clearBtn: document.querySelector(".clearBtn"),
       },
 
-      inputs: {},
+      inputs: {
+        select: document.querySelector(".selectedSet"),
+      },
 
       containers: {
         barInfo: document.querySelector(".barInfo"),
@@ -234,18 +237,18 @@
       const labelGroup = mainChart.append("g");
 
       return {
+        gridLinesGroup,
         xAxisGroup,
         yAxisGroup,
-        gridLinesGroup,
         barGroup,
         labelGroup,
       };
     };
 
     const {
+      gridLinesGroup,
       xAxisGroup,
       yAxisGroup,
-      gridLinesGroup,
       barGroup,
       labelGroup,
     } = getCreatedSVGAndGraph(graphProperties.graphId);
@@ -361,6 +364,10 @@
       const { barInfo } = containers;
 
       const handleUpdatedElements = (e, dataset, classType) => {
+        if (e.target.classList.contains(clickedClass)) {
+          return;
+        }
+
         update(dataset);
         dataBtns.forEach((btn) => btn.classList.remove(classType));
         e.target.classList.add(classType);
@@ -374,12 +381,12 @@
         handleUpdatedElements(e, firstDecadeBarChartData, clickedClass);
         handleEvents();
       });
+
       secondDecadeBtn.addEventListener("click", (e) => {
         handleUpdatedElements(e, secondDecadeBarChartData, clickedClass);
         handleEvents();
       });
 
-      update(firstDecadeBarChartData);
       handleEvents();
     };
 
@@ -393,12 +400,11 @@
         .range([0, calculatedGraphWidth])
         .padding(barPadding);
       const xAxis = xAxisGroup
-        .append("g")
         .attr("transform", translate(0, calculatedGraphHeight))
         .style("color", axesColor);
 
       const yScale = d3.scaleLinear().range([calculatedGraphHeight, 0]);
-      const yAxis = yAxisGroup.append("g").style("color", axesColor);
+      const yAxis = yAxisGroup.style("color", axesColor);
 
       const getGridlines = () => d3.axisLeft(yScale).ticks(5);
 
@@ -450,10 +456,17 @@
         axesTestRotate,
       } = axesParams;
 
-      console.log(barCharDataset);
-      console.log(xScale.bandwidth());
-
       xScale.domain(barCharDataset.map((d) => d.x));
+      yScale.domain([
+        0,
+        Math.ceil(getMaximumElement(barCharDataset, yProperty) / 100) * 100,
+      ]);
+
+      gridLinesGroup
+        .attr("color", gridLinesColor)
+        .style("stroke-dasharray", "3,3")
+        .call(getGridlines().tickSize(-calculatedGraphWidth).tickFormat(""));
+
       xAxis.transition().duration(durationTime).call(d3.axisBottom(xScale));
       xAxis
         .selectAll("text")
@@ -462,14 +475,11 @@
         .style("font-size", axesFontSize)
         .style("font-weight", axesFontWeight);
 
-      yScale.domain([0, getMaximumElement(barCharDataset, yProperty)]);
-      yAxis.transition().duration(durationTime).call(d3.axisLeft(yScale));
+      yAxis
+        .transition()
+        .duration(durationTime)
+        .call(d3.axisLeft(yScale).ticks(5));
       yAxis.selectAll("text").style("font-size", axesFontSize);
-
-      gridLinesGroup
-        .attr("color", gridLinesColor)
-        .style("stroke-dasharray", "3,3")
-        .call(getGridlines().tickSize(-calculatedGraphWidth).tickFormat(""));
 
       const bars = barGroup.selectAll("rect").data(barCharDataset, (d) => d.id);
 
@@ -566,6 +576,10 @@
       };
 
       const getBarsDataCleared = (e) => {
+        if (!barInfo.innerHTML) {
+          return;
+        }
+
         e.target.classList.add(clickedClass);
         barInfo.innerHTML = ``;
         barGroup.selectAll("rect").each((d, i, n) => {
@@ -576,7 +590,7 @@
       const tip = d3
         .tip()
         .attr("class", "tip")
-        .offset([-tooltipYPosition(xScale, margin), 0])
+        .offset([-tooltipYPosition(xScale, margin * 1.5), 0])
         .html((d) => getTooltipContent(d));
 
       labelBtn.onclick = (e) => handleLabels(e);
@@ -597,16 +611,13 @@
       renderView(barCharDataset);
     };
 
-    const getData = async () => {
+    const getData = async (optionValue) => {
       try {
-        const data = await d3.json(DATA);
-        return data;
+        await d3.json(DATA(optionValue)).then((data) => getProperPeriod(data));
       } catch (err) {
         return console.log(`It's definitively not good for you: ${err}`);
       }
     };
-
-    getData().then((data) => getProperPeriod(data));
 
     module.exports = {
       dataActions,
@@ -615,5 +626,7 @@
 
     return { getData };
   })();
-  barChart.getData();
+  document.querySelector(".selectedSet").addEventListener("change", (e) => {
+    barChart.getData(e.target.value);
+  });
 })();
