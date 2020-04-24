@@ -254,6 +254,7 @@
     } = getCreatedSVGAndGraph(graphProperties.graphId);
 
     const getProperPeriod = (data) => {
+      console.log("data in getproperperiod", data);
       if (!data.length) {
         return;
       }
@@ -378,6 +379,7 @@
       };
 
       firstDecadeBtn.addEventListener("click", (e) => {
+        console.log("decade in update", firstDecadeBarChartData);
         handleUpdatedElements(e, firstDecadeBarChartData, clickedClass);
         handleEvents();
       });
@@ -387,6 +389,7 @@
         handleEvents();
       });
 
+      update(firstDecadeBarChartData);
       handleEvents();
     };
 
@@ -598,7 +601,12 @@
       barGroup
         .selectAll("rect")
         .each((d, i, n) => {
-          n[i].addEventListener("click", (e) => handleBarsData(e, n, d));
+          n[i].addEventListener("click", (e) => {
+            if (n[i].classList.contains(clickedBarClass)) {
+              return;
+            }
+            handleBarsData(e, n, d);
+          });
         })
         .call(tip)
         .on("mouseover", (d, i, n) => tip.show(d, n[i]))
@@ -612,8 +620,13 @@
     };
 
     const getData = async (optionValue) => {
+      console.log("value in getData", optionValue);
       try {
-        await d3.json(DATA(optionValue)).then((data) => getProperPeriod(data));
+        console.log("value in try", optionValue);
+        await d3.json(DATA(optionValue)).then((data) => {
+          console.log("data", data);
+          getProperPeriod(data);
+        });
       } catch (err) {
         return console.log(`It's definitively not good for you: ${err}`);
       }
