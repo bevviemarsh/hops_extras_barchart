@@ -9,9 +9,7 @@
     const graphProperties = {
       colors: {
         barColor: "#13b937",
-
         labelColor: "#222523",
-
         gridLinesColor: "#c0c4ce",
       },
 
@@ -255,7 +253,6 @@
     } = getCreatedSVGAndGraph(graphProperties.graphId);
 
     const getProperPeriod = (data) => {
-      console.log("data in getproperperiod", data);
       if (!data.length) {
         return;
       }
@@ -380,7 +377,6 @@
       };
 
       firstDecadeBtn.addEventListener("click", (e) => {
-        console.log("decade in update", firstDecadeBarChartData);
         handleUpdatedElements(e, firstDecadeBarChartData, clickedClass);
         handleEvents();
       });
@@ -621,11 +617,8 @@
     };
 
     const getData = async (optionValue) => {
-      console.log("value in getData", optionValue);
       try {
-        console.log("value in try", optionValue);
         await d3.json(DATA(optionValue)).then((data) => {
-          console.log("data", data);
           getProperPeriod(data);
         });
       } catch (err) {
