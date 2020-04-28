@@ -232,7 +232,7 @@ module.exports.DOMElements = {
         dataBtns.forEach((btn) => btn.classList.remove(classType));
         e.target.classList.add(classType);
         labelBtn.classList.remove(classType);
-        graphProperties.clickedLabel = true;
+        graphProperties.clickedLabel = false;
         barInfo.textContent = "";
         clearBtn.classList.remove(clickedClass);
         handleEvents();
@@ -246,6 +246,9 @@ module.exports.DOMElements = {
 
       update(firstDecadeDataset);
       barInfo.textContent = "";
+      dataBtns.forEach((btn) => btn.classList.remove(clickedClass));
+      labelBtn.classList.remove(clickedClass);
+      graphProperties.clickedLabel = false;
       handleEvents();
     };
 
@@ -402,7 +405,7 @@ module.exports.DOMElements = {
           .duration(durationTime)
           .style(
             "opacity",
-            checkIfTrue(graphProperties.clickedLabel, visible, hidden)
+            checkIfTrue(!graphProperties.clickedLabel, visible, hidden)
           );
       };
 
@@ -484,11 +487,6 @@ module.exports.DOMElements = {
       } catch (err) {
         return console.log(`It's definitively not good for you: ${err}`);
       }
-    };
-
-    module.exports = {
-      dataActions,
-      graphActions,
     };
 
     return { getData };
@@ -644,7 +642,7 @@ module.exports.graphProperties = {
 
   durationTime: 400,
 
-  clickedLabel: true,
+  clickedLabel: false,
   clickedBar: true,
   clickedClass: "active",
   clickedBarClass: "activeBar",

@@ -212,7 +212,7 @@
         dataBtns.forEach((btn) => btn.classList.remove(classType));
         e.target.classList.add(classType);
         labelBtn.classList.remove(classType);
-        graphProperties.clickedLabel = true;
+        graphProperties.clickedLabel = false;
         barInfo.textContent = "";
         clearBtn.classList.remove(clickedClass);
         handleEvents();
@@ -226,6 +226,9 @@
 
       update(firstDecadeDataset);
       barInfo.textContent = "";
+      dataBtns.forEach((btn) => btn.classList.remove(clickedClass));
+      labelBtn.classList.remove(clickedClass);
+      graphProperties.clickedLabel = false;
       handleEvents();
     };
 
@@ -382,7 +385,7 @@
           .duration(durationTime)
           .style(
             "opacity",
-            checkIfTrue(graphProperties.clickedLabel, visible, hidden)
+            checkIfTrue(!graphProperties.clickedLabel, visible, hidden)
           );
       };
 
@@ -464,11 +467,6 @@
       } catch (err) {
         return console.log(`It's definitively not good for you: ${err}`);
       }
-    };
-
-    module.exports = {
-      dataActions,
-      graphActions,
     };
 
     return { getData };

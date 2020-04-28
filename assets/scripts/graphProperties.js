@@ -64,7 +64,7 @@ module.exports.graphProperties = {
 
   durationTime: 400,
 
-  clickedLabel: true,
+  clickedLabel: false,
   clickedBar: true,
   clickedClass: "active",
   clickedBarClass: "activeBar",
