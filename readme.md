@@ -17,7 +17,7 @@ This is a web application (using Brew Dog Punk API) that allows every beer geek 
 
 Project is created with:
 
-- HTML5 / CSS3 / JS
+- HTML5 / CSS3 (flexbox) / JS (functional approach)
 - D3.js, version: 5.16.0
 - Jest, version: 25.3
 - Browserify

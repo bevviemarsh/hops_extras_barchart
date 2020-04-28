@@ -1,4 +1,4 @@
-const { dataActions } = require("../scripts/app");
+const { dataActions } = require("../scripts/dataActions");
 
 test("get an array of values", () => {
   const exampleDataStructure = [
@@ -124,28 +124,52 @@ test("filter with falsy values", () => {
 
 test("check boolean of element", () => {
   const exampleObject = { name: "Random beer" };
+  const exampleNoData = "no data";
   const exampleObjectWithMissingData = { name: "" };
 
-  expect(dataActions.checkIfTrue(exampleObject.name)).toEqual("Random beer");
+  expect(
+    dataActions.checkIfTrue(
+      exampleObject.name,
+      exampleObject.name,
+      exampleNoData
+    )
+  ).toEqual("Random beer");
 
-  expect(dataActions.checkIfTrue(exampleObjectWithMissingData.name)).toBe(
-    "no data"
-  );
+  expect(
+    dataActions.checkIfTrue(
+      exampleObjectWithMissingData.name,
+      exampleObject.name,
+      exampleNoData
+    )
+  ).toBe("no data");
 });
 
-test("get tooltip info", () => {
+test("get hops info", () => {
   const exampleData = [{ name: "Random hop", value: 5, attribute: "aroma" }];
+  const exampleNoData = "no data";
 
   expect(
-    dataActions.getTooltipInfo(exampleData[0], dataActions.checkIfTrue)
-  ).toContain("Random hop: 5g - aroma");
+    dataActions.getHopsInfo(
+      exampleData[0],
+      dataActions.checkIfTrue,
+      exampleNoData,
+      "name",
+      "value",
+      "attribute"
+    )
+  ).toEqual({ name: "Random hop", value: "5g", attribute: "aroma" });
 });
 
-test("get tooltip with missing data", () => {
+test("get hops with missing data", () => {
   const exampleEmptyArray = [];
+  const exampleNoData = "no data";
 
   expect(
-    dataActions.getTooltipInfo(exampleEmptyArray[0], dataActions.checkIfTrue)
+    dataActions.getHopsInfo(
+      exampleEmptyArray[0],
+      dataActions.checkIfTrue,
+      exampleNoData
+    )
   ).toStrictEqual([]);
 });
 

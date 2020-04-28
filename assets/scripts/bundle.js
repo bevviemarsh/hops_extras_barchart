@@ -1,182 +1,38 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+module.exports.DOMElements = {
+  buttons: {
+    dataBtns: document.querySelectorAll("button#btn"),
+    firstDecadeBtn: document.querySelector(".earlierBtn"),
+    secondDecadeBtn: document.querySelector(".laterBtn"),
+    labelBtn: document.querySelector("button.labelsBtn"),
+    clearBtn: document.querySelector(".clearBtn"),
+  },
+
+  inputs: {
+    select: document.querySelector(".selectedSet"),
+  },
+
+  containers: {
+    barInfo: document.querySelector(".barInfo"),
+  },
+};
+
+},{}],2:[function(require,module,exports){
 (function IIFE() {
   const barChart = (function () {
     const unique = require("uniq");
+    const { dataProperties } = require("./dataProperties");
+    const { graphProperties } = require("./graphProperties");
+    const { dataActions } = require("./dataActions");
+    const { graphActions } = require("./graphActions");
+    const { DOMElements } = require("./DOMElements");
 
     const DATA = (optionValue) =>
       `https://api.punkapi.com/v2/beers?page=${optionValue}`;
 
-    const graphProperties = {
-      colors: {
-        barColor: "#13b937",
-        labelColor: "#222523",
-        gridLinesColor: "#c0c4ce",
-      },
-
-      barParams: {
-        barPadding: 0.2,
-        barYPositon: (height, scaleFn, value) => height - scaleFn(value),
-      },
-
-      labelParams: {
-        fontSize: (scaleFn) => {
-          if (scaleFn.bandwidth() >= 110) {
-            return scaleFn.bandwidth() / 15;
-          } else if (scaleFn.bandwidth() >= 80) {
-            return scaleFn.bandwidth() / 6;
-          } else if (scaleFn.bandwidth() <= 20) {
-            return 0;
-          } else {
-            return scaleFn.bandwidth() / 3;
-          }
-        },
-
-        fontWeight: "bold",
-        opacityValue: "0",
-        textAnchorPosition: "middle",
-        letterSpacing: "1",
-        labelClass: ".label",
-        labelXPosition: (scaleFn, value) =>
-          scaleFn(value) + scaleFn.bandwidth() / 2,
-        labelYPosition: (scaleFn, value, marginValue) =>
-          scaleFn(value) - marginValue / 2,
-        visible: 1,
-        hidden: 0,
-      },
-
-      tooltipParams: {
-        tooltipYPosition: (scaleFn, marginValue) =>
-          scaleFn.bandwidth() >= 80 ? marginValue * 3 : marginValue * 2,
-      },
-
-      axesParams: {
-        axesColor: "#798296",
-        axesFontSize: "10px",
-        axesFontWeight: "bold",
-        axesTextAnchor: "end",
-        axesTestRotate: -45,
-        tickSizeValue: "10",
-      },
-
-      strokeWidth: 1,
-
-      visible: "1",
-      hidden: "0",
-      cursorPointer: "pointer",
-
-      graphId: "barChart",
-      labelClass: ".barChart",
-
-      margin: 10,
-      graphMargin: { top: 90, left: 20, right: 90, bottom: 150 },
-
-      durationTime: 400,
-
-      clickedLabel: true,
-      clickedBar: true,
-      clickedClass: "active",
-      clickedBarClass: "activeBar",
-
-      translate: (firstMarginValue, secondMarginValue) =>
-        typeof firstMarginValue !== "number" ||
-        typeof secondMarginValue !== "number"
-          ? `translate(0, 0)`
-          : `translate(${firstMarginValue}, ${secondMarginValue})`,
-
-      rotate: (num) =>
-        typeof num !== "number" ? `rotate(0)` : `rotate(${num})`,
-    };
-
-    const graphActions = {
-      getContainer: (field) => document.getElementById(field),
-    };
-
-    const DOMElements = {
-      buttons: {
-        dataBtns: document.querySelectorAll("button#btn"),
-        firstDecadeBtn: document.querySelector(".earlierBtn"),
-        secondDecadeBtn: document.querySelector(".laterBtn"),
-        labelBtn: document.querySelector("button.labelsBtn"),
-        clearBtn: document.querySelector(".clearBtn"),
-      },
-
-      inputs: {
-        select: document.querySelector(".selectedSet"),
-      },
-
-      containers: {
-        barInfo: document.querySelector(".barInfo"),
-      },
-    };
-
-    const dataProperties = {
-      periodRange: 2010,
-      cutMonth: 3,
-      hopsProperty: "hops",
-      ingredientsProperty: "ingredients",
-      amountProperty: "amount",
-      valueProperty: "value",
-      firstBrewedProperty: "first_brewed",
-      yProperty: "y",
-      noData: "no data",
-    };
-
-    const dataActions = {
-      getEarlierPeriod: (data, property, sliceValue, range) =>
-        !data || !property || !sliceValue || !range
-          ? []
-          : data.filter((item) =>
-              item[property].length > 4
-                ? Number(item[property].slice(sliceValue)) <= range
-                : Number(item[property]) <= range
-            ),
-
-      getLaterPeriod: (data, property, sliceValue, range) =>
-        !data || !property || !sliceValue || !range
-          ? []
-          : data.filter((item) =>
-              item[property].length > 4
-                ? Number(item[property].slice(sliceValue)) > range
-                : Number(item[property]) > range
-            ),
-
-      getHopsValues: (item, firstProp, secondProp, thirdProp, fourthProp) =>
-        !firstProp || !secondProp || !thirdProp || !fourthProp
-          ? []
-          : item[firstProp][secondProp].map(
-              (item) => item[thirdProp][fourthProp]
-            ),
-
-      getHopsSum: (arr) =>
-        !arr.length
-          ? 0
-          : arr.reduce((prevValue, currValue) => prevValue + currValue),
-
-      checkIfTrue: (condition, firstItem, secondItem) =>
-        condition ? firstItem : secondItem,
-
-      getHopsInfo: (dd, checkFn, emptyValue) =>
-        !dd || !checkFn
-          ? []
-          : {
-              name: `${checkFn(dd.name, dd.name, emptyValue)}`,
-              value: `${checkFn(dd.value, dd.value, emptyValue)}g`,
-              attribute: `${checkFn(dd.attribute, dd.attribute, emptyValue)}`,
-            },
-
-      getMaximumElement: (arr, property) =>
-        !arr || !arr.length
-          ? 0
-          : Math.max(
-              ...arr.map((item) =>
-                !property || item[property] === undefined ? 0 : item[property]
-              )
-            ),
-    };
-
     const getCalculatedSVGAndGraphParams = (chartField) => {
-      const { margin, graphMargin, translate } = graphProperties;
-      const { getContainer } = graphActions;
+      const { margin, graphMargin } = graphProperties;
+      const { getContainer, translate } = graphActions;
 
       const mainContainer = (chartField) => getContainer(chartField);
 
@@ -317,15 +173,15 @@
     };
 
     const getBarChartData = (firstDecade, secondDecade) => {
-      const { noData } = dataProperties;
+      const { noData, cutName } = dataProperties;
       const { checkIfTrue, getHopsInfo } = dataActions;
 
       const getCalculatedBarChartData = (data) =>
         data.map((d) => ({
           id: d.id,
           x: checkIfTrue(
-            d.name.length > 25,
-            `${d.name.substr(0, 25)}...`,
+            d.name.length > cutName,
+            `${d.name.substr(0, cutName)}...`,
             d.name
           ),
           y: d.amount,
@@ -334,7 +190,9 @@
             year: checkIfTrue(d.year, d.year, noData),
             abv: checkIfTrue(d.abv, d.abv, noData),
             ibu: checkIfTrue(d.ibu, d.ibu, noData),
-            hopsInfo: d.hops.map((dd) => getHopsInfo(dd, checkIfTrue, noData)),
+            hopsInfo: d.hops.map((dd) =>
+              getHopsInfo(dd, checkIfTrue, noData, "name", "value", "attribute")
+            ),
           },
         }));
 
@@ -362,6 +220,9 @@
       } = buttons;
       const { barInfo } = containers;
 
+      const firstDecadeDataset = firstDecadeBarChartData;
+      const secondDecadeDataset = secondDecadeBarChartData;
+
       const handleUpdatedElements = (e, dataset, classType) => {
         if (e.target.classList.contains(clickedClass)) {
           return;
@@ -374,24 +235,23 @@
         graphProperties.clickedLabel = true;
         barInfo.textContent = "";
         clearBtn.classList.remove(clickedClass);
+        handleEvents();
       };
 
-      firstDecadeBtn.addEventListener("click", (e) => {
-        handleUpdatedElements(e, firstDecadeBarChartData, clickedClass);
-        handleEvents();
-      });
+      firstDecadeBtn.onclick = (e) =>
+        handleUpdatedElements(e, firstDecadeDataset, clickedClass);
 
-      secondDecadeBtn.addEventListener("click", (e) => {
-        handleUpdatedElements(e, secondDecadeBarChartData, clickedClass);
-        handleEvents();
-      });
+      secondDecadeBtn.onclick = (e) =>
+        handleUpdatedElements(e, secondDecadeDataset, clickedClass);
 
-      update(firstDecadeBarChartData);
+      update(firstDecadeDataset);
+      barInfo.textContent = "";
       handleEvents();
     };
 
     const getCalculatedScalesAndAxes = () => {
-      const { barParams, axesParams, translate } = graphProperties;
+      const { barParams, axesParams } = graphProperties;
+      const { translate } = graphActions;
       const { barPadding } = barParams;
       const { axesColor } = axesParams;
 
@@ -433,9 +293,9 @@
         axesParams,
         durationTime,
         cursorPointer,
-        rotate,
         margin,
       } = graphProperties;
+      const { rotate } = graphActions;
       const { yProperty } = dataProperties;
       const { getMaximumElement } = dataActions;
       const { barColor, labelColor, gridLinesColor } = colors;
@@ -638,7 +498,159 @@
   });
 })();
 
-},{"uniq":2}],2:[function(require,module,exports){
+},{"./DOMElements":1,"./dataActions":3,"./dataProperties":4,"./graphActions":5,"./graphProperties":6,"uniq":7}],3:[function(require,module,exports){
+module.exports.dataActions = {
+  getEarlierPeriod: (data, property, sliceValue, range) =>
+    !data || !property || !sliceValue || !range
+      ? []
+      : data.filter((item) =>
+          item[property].length > 4
+            ? Number(item[property].slice(sliceValue)) <= range
+            : Number(item[property]) <= range
+        ),
+
+  getLaterPeriod: (data, property, sliceValue, range) =>
+    !data || !property || !sliceValue || !range
+      ? []
+      : data.filter((item) =>
+          item[property].length > 4
+            ? Number(item[property].slice(sliceValue)) > range
+            : Number(item[property]) > range
+        ),
+
+  getHopsValues: (item, firstProp, secondProp, thirdProp, fourthProp) =>
+    !firstProp || !secondProp || !thirdProp || !fourthProp
+      ? []
+      : item[firstProp][secondProp].map((item) => item[thirdProp][fourthProp]),
+
+  getHopsSum: (arr) =>
+    !arr.length
+      ? 0
+      : arr.reduce((prevValue, currValue) => prevValue + currValue),
+
+  checkIfTrue: (condition, firstItem, secondItem) =>
+    condition ? firstItem : secondItem,
+
+  getHopsInfo: (dd, checkFn, emptyValue, nameProp, valueProp, attrProp) =>
+    !dd || !checkFn
+      ? []
+      : {
+          name: `${checkFn(dd[nameProp], dd[nameProp], emptyValue)}`,
+          value: `${checkFn(dd[valueProp], dd[valueProp], emptyValue)}g`,
+          attribute: `${checkFn(dd[attrProp], dd[attrProp], emptyValue)}`,
+        },
+
+  getMaximumElement: (arr, property) =>
+    !arr || !arr.length
+      ? 0
+      : Math.max(
+          ...arr.map((item) =>
+            !property || item[property] === undefined ? 0 : item[property]
+          )
+        ),
+};
+
+},{}],4:[function(require,module,exports){
+module.exports.dataProperties = {
+  periodRange: 2010,
+  cutMonth: 3,
+  cutName: 25,
+  hopsProperty: "hops",
+  ingredientsProperty: "ingredients",
+  amountProperty: "amount",
+  valueProperty: "value",
+  firstBrewedProperty: "first_brewed",
+  yProperty: "y",
+  noData: "no data",
+};
+
+},{}],5:[function(require,module,exports){
+module.exports.graphActions = {
+  getContainer: (field) => document.getElementById(field),
+
+  translate: (firstMarginValue, secondMarginValue) =>
+    typeof firstMarginValue !== "number" ||
+    typeof secondMarginValue !== "number"
+      ? `translate(0, 0)`
+      : `translate(${firstMarginValue}, ${secondMarginValue})`,
+
+  rotate: (num) => (typeof num !== "number" ? `rotate(0)` : `rotate(${num})`),
+};
+
+},{}],6:[function(require,module,exports){
+module.exports.graphProperties = {
+  colors: {
+    barColor: "#13b937",
+    labelColor: "#222523",
+    gridLinesColor: "#c0c4ce",
+  },
+
+  barParams: {
+    barPadding: 0.2,
+    barYPositon: (height, scaleFn, value) => height - scaleFn(value),
+  },
+
+  labelParams: {
+    fontSize: (scaleFn) => {
+      if (scaleFn.bandwidth() >= 110) {
+        return scaleFn.bandwidth() / 15;
+      } else if (scaleFn.bandwidth() >= 80) {
+        return scaleFn.bandwidth() / 6;
+      } else if (scaleFn.bandwidth() <= 20) {
+        return 0;
+      } else {
+        return scaleFn.bandwidth() / 3;
+      }
+    },
+
+    fontWeight: "bold",
+    opacityValue: "0",
+    textAnchorPosition: "middle",
+    letterSpacing: "1",
+    labelClass: ".label",
+    labelXPosition: (scaleFn, value) =>
+      scaleFn(value) + scaleFn.bandwidth() / 2,
+    labelYPosition: (scaleFn, value, marginValue) =>
+      scaleFn(value) - marginValue / 2,
+    visible: 1,
+    hidden: 0,
+  },
+
+  tooltipParams: {
+    tooltipYPosition: (scaleFn, marginValue) =>
+      scaleFn.bandwidth() >= 80 ? marginValue * 3 : marginValue * 2,
+  },
+
+  axesParams: {
+    axesColor: "#798296",
+    axesFontSize: "10px",
+    axesFontWeight: "bold",
+    axesTextAnchor: "end",
+    axesTestRotate: -45,
+    tickSizeValue: "10",
+  },
+
+  strokeWidth: 1,
+
+  visible: "1",
+  hidden: "0",
+  cursorPointer: "pointer",
+
+  graphId: "barChart",
+  labelClass: ".barChart",
+
+  margin: 10,
+  graphMargin: { top: 90, left: 20, right: 90, bottom: 150 },
+
+  durationTime: 400,
+
+  clickedLabel: true,
+  clickedBar: true,
+  clickedClass: "active",
+  clickedBarClass: "activeBar",
+};
+
+},{}],7:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -697,4 +709,4 @@ function unique(list, compare, sorted) {
 
 module.exports = unique
 
-},{}]},{},[1]);
+},{}]},{},[2]);
