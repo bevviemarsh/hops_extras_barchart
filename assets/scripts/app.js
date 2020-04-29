@@ -190,31 +190,20 @@
       secondDecadeBarChartData
     ) => {
       const { clickedClass } = graphProperties;
-      const { buttons, containers } = DOMElements;
-      const {
-        dataBtns,
-        firstDecadeBtn,
-        secondDecadeBtn,
-        labelBtn,
-        clearBtn,
-      } = buttons;
-      const { barInfo } = containers;
+      const { buttons } = DOMElements;
+      const { firstDecadeBtn, secondDecadeBtn } = buttons;
 
       const firstDecadeDataset = firstDecadeBarChartData;
       const secondDecadeDataset = secondDecadeBarChartData;
 
       const handleUpdatedElements = (e, dataset, classType) => {
-        if (e.target.classList.contains(clickedClass)) {
+        if (e.target.classList.contains(classType)) {
           return;
         }
 
         update(dataset);
-        dataBtns.forEach((btn) => btn.classList.remove(classType));
+        resetEvents(classType);
         e.target.classList.add(classType);
-        labelBtn.classList.remove(classType);
-        graphProperties.clickedLabel = false;
-        barInfo.textContent = "";
-        clearBtn.classList.remove(clickedClass);
         handleEvents();
       };
 
@@ -225,10 +214,7 @@
         handleUpdatedElements(e, secondDecadeDataset, clickedClass);
 
       update(firstDecadeDataset);
-      barInfo.textContent = "";
-      dataBtns.forEach((btn) => btn.classList.remove(clickedClass));
-      labelBtn.classList.remove(clickedClass);
-      graphProperties.clickedLabel = false;
+      resetEvents(clickedClass);
       handleEvents();
     };
 
@@ -453,6 +439,18 @@
         .on("mouseout", () => tip.hide());
 
       clearBtn.addEventListener("click", (e) => getBarsDataCleared(e));
+    };
+
+    const resetEvents = (classType) => {
+      const { buttons, containers } = DOMElements;
+      const { dataBtns, labelBtn, clearBtn } = buttons;
+      const { barInfo } = containers;
+
+      barInfo.textContent = "";
+      dataBtns.forEach((btn) => btn.classList.remove(classType));
+      labelBtn.classList.remove(classType);
+      graphProperties.clickedLabel = false;
+      clearBtn.classList.remove(classType);
     };
 
     const update = (barCharDataset) => {
