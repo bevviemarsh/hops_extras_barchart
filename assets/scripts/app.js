@@ -1,6 +1,5 @@
 (function IIFE() {
   const barChart = (function () {
-    const unique = require("uniq");
     const { dataProperties } = require("./dataProperties");
     const { graphProperties } = require("./graphProperties");
     const { dataActions } = require("./dataActions");
@@ -459,11 +458,10 @@
 
     const getData = async (optionValue) => {
       try {
-        await d3.json(DATA(optionValue)).then((data) => {
-          getProperPeriod(data);
-        });
+        const data = await d3.json(DATA(optionValue));
+        getProperPeriod(data);
       } catch (err) {
-        return console.log(`It's definitively not good for you: ${err}`);
+        console.log(`It's definitively not good for you: ${err}`);
       }
     };
 

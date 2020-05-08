@@ -20,7 +20,6 @@ module.exports.DOMElements = {
 },{}],2:[function(require,module,exports){
 (function IIFE() {
   const barChart = (function () {
-    const unique = require("uniq");
     const { dataProperties } = require("./dataProperties");
     const { graphProperties } = require("./graphProperties");
     const { dataActions } = require("./dataActions");
@@ -479,11 +478,10 @@ module.exports.DOMElements = {
 
     const getData = async (optionValue) => {
       try {
-        await d3.json(DATA(optionValue)).then((data) => {
-          getProperPeriod(data);
-        });
+        const data = await d3.json(DATA(optionValue));
+        getProperPeriod(data);
       } catch (err) {
-        return console.log(`It's definitively not good for you: ${err}`);
+        console.log(`It's definitively not good for you: ${err}`);
       }
     };
 
@@ -494,7 +492,7 @@ module.exports.DOMElements = {
   });
 })();
 
-},{"./DOMElements":1,"./dataActions":3,"./dataProperties":4,"./graphActions":5,"./graphProperties":6,"uniq":7}],3:[function(require,module,exports){
+},{"./DOMElements":1,"./dataActions":3,"./dataProperties":4,"./graphActions":5,"./graphProperties":6}],3:[function(require,module,exports){
 module.exports.dataActions = {
   getEarlierPeriod: (data, property, sliceValue, range) =>
     !data || !property || !sliceValue || !range
@@ -645,64 +643,5 @@ module.exports.graphProperties = {
   clickedClass: "active",
   clickedBarClass: "activeBar",
 };
-
-},{}],7:[function(require,module,exports){
-"use strict"
-
-function unique_pred(list, compare) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b=list[0]
-  for(var i=1; i<len; ++i) {
-    b = a
-    a = list[i]
-    if(compare(a, b)) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique_eq(list) {
-  var ptr = 1
-    , len = list.length
-    , a=list[0], b = list[0]
-  for(var i=1; i<len; ++i, b=a) {
-    b = a
-    a = list[i]
-    if(a !== b) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      list[ptr++] = a
-    }
-  }
-  list.length = ptr
-  return list
-}
-
-function unique(list, compare, sorted) {
-  if(list.length === 0) {
-    return list
-  }
-  if(compare) {
-    if(!sorted) {
-      list.sort(compare)
-    }
-    return unique_pred(list, compare)
-  }
-  if(!sorted) {
-    list.sort()
-  }
-  return unique_eq(list)
-}
-
-module.exports = unique
 
 },{}]},{},[2]);
